@@ -1,0 +1,42 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AiInitiative {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String?  // free-form tag: "tooling", "research", "internal", etc.
+  status      String   @default("exploring") // "exploring", "building", "shipped", "archived"
+  ownerId     String
+  ownerEmail  String
+  ownerName   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members AiInitiativeMember[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model AiInitiativeMember {
+  id           String   @id @default(cuid())
+  initiativeId String
+  userId       String
+  userEmail    String
+  userName     String?
+  role         String   @default("follower") // "contributor" or "follower"
+  createdAt    DateTime @default(now())
+
+  initiative AiInitiative @relation(fields: [initiativeId], references: [id], onDelete: Cascade)
+
+  @@unique([initiativeId, userId])
+  @@index([userId])
+}
