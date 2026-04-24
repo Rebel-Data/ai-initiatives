@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  // The app is served under rgmp.net/ai-initiatives through the shared
-  // load balancer's URL map. Next.js doesn't need to know about that
-  // prefix for routing (the LB strips the prefix before reaching the
-  // container), but we expose it for <Link> back-references when needed.
+  // Served under rgmp.net/ai-initiatives via the shared LB URL map. The LB
+  // does NOT rewrite the path prefix, so Next.js has to know about it —
+  // matches the pattern used by other rgmp.net apps (brand portal, fare
+  // dashboard, etc.). Affects page routing, <Link> href generation, and
+  // the middleware matcher.
+  basePath: "/ai-initiatives",
   env: {
     NEXT_PUBLIC_COMMIT_HASH: process.env.NEXT_PUBLIC_COMMIT_HASH || "dev",
   },
