@@ -20,7 +20,7 @@ No test runner is configured. "Verification" here = `npm run lint && npm run typ
 
 ## Architecture
 
-This is a small Next.js 14 (App Router) app deployed to Cloud Run and served **behind the shared Rebel load balancer at `rgmp.net/ai-initiatives`**. The LB strips the `/ai-initiatives` prefix before the request reaches the container, so Next.js routes are written as if they live at the root. `NEXT_PUBLIC_COMMIT_HASH` is the only env var exposed via `next.config.js`; the `/ai-initiatives` prefix is *not* configured as a Next.js basePath.
+This is a small Next.js 14 (App Router) app deployed to Cloud Run and served **behind the shared Rebel load balancer at `rgmp.net/ai-initiatives`**. The LB does **not** rewrite the path prefix, so `next.config.js` sets `basePath: "/ai-initiatives"` — matching how every other rgmp.net app (brand portal, fare dashboard, wiki-status, etc.) is wired. Next.js therefore serves pages at `/ai-initiatives/*`, `<Link>` hrefs are prefixed automatically, and the middleware matcher is scoped to the basePath.
 
 ### Auth model — two-layer, do not collapse them
 
@@ -57,4 +57,4 @@ When adding a new page or API route, **always call `verifySession()` server-side
 - The dev server runs on **3001**, not 3000. If you see "port in use," it's likely `rgmp-applications` on 3000 or a stale `next dev` — check before picking another port.
 - `npm run build` depends on `prisma generate` succeeding; if you change `schema.prisma`, re-run build or `postinstall` will fall behind.
 - When debugging auth locally, `SKIP_AUTH=true` only skips the middleware. Pages that call `verifySession()` will still return no user unless you also stub `verifySession` or hit a real rgmp.net verify endpoint.
-- The load balancer strips `/ai-initiatives`. Any hardcoded absolute link you write for inter-app navigation (e.g. back to `rgmp.net/...`) must include the prefix; internal `<Link href="/...">` must not.
+- `basePath: "/ai-initiatives"` is load-bearing — Next.js prepends it to `<Link>` hrefs and static asset URLs automatically. Inside middleware, `request.nextUrl.pathname` is the *post-basePath* path (e.g. `/new`, not `/ai-initiatives/new`), so don't re-add the prefix when constructing redirect callbacks.
