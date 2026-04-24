@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { apiUrl } from "@/lib/api";
 
 const STATUSES = [
   { value: "exploring", label: "Exploring" },
@@ -24,7 +25,7 @@ export default function NewInitiativeForm() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await fetch("/api/initiatives", {
+      const res = await fetch(apiUrl("/api/initiatives"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, description, category, status }),

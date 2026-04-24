@@ -1,0 +1,138 @@
+name: CI/CD
+
+# Mirrors the Rebel-Data/rgmp-applications workflow:
+# lint + typecheck + build on every push/PR, deploy to Cloud Run on push to main.
+# Deploy just rolls the image forward — env vars, INTERNAL_API_KEY secret
+# binding, and Cloud SQL attachment are owned by the one-time service
+# bootstrap (README → "Deployment (first-time bootstrap)"). gcloud preserves
+# unspecified flags on update, so we don't re-assert them here.
+
+on:
+  push:
+    paths-ignore:
+      - "*.md"
+      - "docs/**"
+    branches: [main]
+  pull_request:
+    paths-ignore:
+      - "*.md"
+      - "docs/**"
+    branches: [main]
+
+env:
+  NODE_VERSION: '22'
+  PROJECT_ID: mobility-payments-db
+  REGION: europe-west4
+  SERVICE_NAME: ai-initiatives
+  IMAGE_NAME: europe-west4-docker.pkg.dev/mobility-payments-db/cloud-run/ai-initiatives
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run typecheck
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build
+        env:
+          # Prisma/next build don't hit the DB, but DATABASE_URL must be a
+          # syntactically valid URL for Prisma Client init checks.
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+        run: npm run build
+
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker europe-west4-docker.pkg.dev --quiet
+
+      - name: Build Docker image
+        env:
+          SHA: ${{ github.sha }}
+          IMAGE: ${{ env.IMAGE_NAME }}
+        run: |
+          docker build \
+            --build-arg "NEXT_PUBLIC_COMMIT_HASH=$SHA" \
+            --tag "$IMAGE:$SHA" \
+            --tag "$IMAGE:latest" \
+            .
+
+      - name: Push Docker image
+        env:
+          SHA: ${{ github.sha }}
+          IMAGE: ${{ env.IMAGE_NAME }}
+        run: |
+          docker push "$IMAGE:$SHA"
+          docker push "$IMAGE:latest"
+
+      - name: Deploy to Cloud Run
+        env:
+          SHA: ${{ github.sha }}
+          IMAGE: ${{ env.IMAGE_NAME }}
+          SERVICE: ${{ env.SERVICE_NAME }}
+          REGION: ${{ env.REGION }}
+          PROJECT: ${{ env.PROJECT_ID }}
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --image "$IMAGE:$SHA" \
+            --region "$REGION" \
+            --platform managed \
+            --project "$PROJECT"
+
+      - name: Show deployment URL
+        env:
+          SERVICE: ${{ env.SERVICE_NAME }}
+          REGION: ${{ env.REGION }}
+          PROJECT: ${{ env.PROJECT_ID }}
+        run: |
+          gcloud run services describe "$SERVICE" \
+            --region "$REGION" \
+            --project "$PROJECT" \
+            --format 'value(status.url)'
