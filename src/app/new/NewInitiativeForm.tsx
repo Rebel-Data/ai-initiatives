@@ -93,8 +93,11 @@ export default function NewInitiativeForm() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe the problem, the AI angle, and what &quot;working&quot; looks like. Include links if you have them."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red font-mono text-sm"
           />
+          <p className="text-xs text-gray-500 mt-1">
+            Supports GitHub-flavored markdown — paste a README straight in if you have one.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

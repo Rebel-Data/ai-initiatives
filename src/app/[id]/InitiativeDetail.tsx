@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { apiUrl } from "@/lib/api";
+import Markdown from "@/components/Markdown";
 
 type MemberRole = "contributor" | "follower";
 
@@ -187,14 +188,19 @@ export default function InitiativeDetail({
               className="w-full text-2xl font-bold px-3 py-2 border border-gray-300 rounded-lg"
               placeholder="Title"
             />
-            <textarea
-              value={form.description}
-              maxLength={5000}
-              rows={8}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-              placeholder="Description"
-            />
+            <div>
+              <textarea
+                value={form.description}
+                maxLength={5000}
+                rows={12}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                placeholder="Description"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Supports GitHub-flavored markdown.
+              </p>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <input
                 type="text"
@@ -293,9 +299,7 @@ export default function InitiativeDetail({
               </span>
             </div>
 
-            <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-              {initiative.description}
-            </p>
+            <Markdown>{initiative.description}</Markdown>
 
             {(initiative.resourceUrl || initiative.deploymentUrl) && (
               <div className="flex flex-wrap gap-2 pt-2">
