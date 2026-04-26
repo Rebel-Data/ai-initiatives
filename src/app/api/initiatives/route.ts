@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyTeams } from "@/lib/teams";
 
 const VALID_STATUSES = ["exploring", "building", "shipped", "archived"] as const;
 type Status = (typeof VALID_STATUSES)[number];
@@ -93,6 +94,8 @@ export async function POST(request: NextRequest) {
       ownerName: user.name ?? null,
     },
   });
+
+  await notifyTeams(initiative, "created");
 
   return NextResponse.json(initiative, { status: 201 });
 }

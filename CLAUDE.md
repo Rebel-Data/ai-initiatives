@@ -50,7 +50,13 @@ When adding a new page or API route, **always call `verifySession()` server-side
 
 - Dockerfile targets `node:22-alpine`, uses Next.js standalone output, runs `prisma generate` during `npm run build` (also in the Dockerfile explicitly).
 - Prisma needs the musl binary target — already set via `binaryTargets = ["native", "linux-musl-openssl-3.0.x"]` in `schema.prisma`. Do not remove.
-- Deployed to Cloud Run in `mobility-payments-db / europe-west4`. `INTERNAL_API_KEY` comes from Secret Manager.
+- Deployed to Cloud Run in `mobility-payments-db / europe-west4`. `INTERNAL_API_KEY` and `TEAMS_WEBHOOK_URL` come from Secret Manager.
+
+### Notifications
+
+- Initiative create/update posts an Adaptive Card to a Microsoft Teams channel via `src/lib/teams.ts#notifyTeams`. The channel + workflow are configured in Teams ("Post adaptive card in chat or channel when a webhook request is received"); the URL it gives you is stored in Secret Manager as `teams-webhook-url` and exposed to Cloud Run as `TEAMS_WEBHOOK_URL`.
+- The helper is **fail-soft**: if the env var is unset (e.g. local dev without the secret) it no-ops, and any HTTP failure is logged but does not propagate, so a downed Teams workflow can never break the API.
+- Updates only fire a card when something user-visible actually changed (title/description/status/category/either URL) — see the diff check in `src/app/api/initiatives/[id]/route.ts`.
 
 ## Gotchas
 

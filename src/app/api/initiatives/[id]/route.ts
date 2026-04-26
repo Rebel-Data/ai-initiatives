@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { notifyTeams } from "@/lib/teams";
 
 const VALID_STATUSES = ["exploring", "building", "shipped", "archived"] as const;
 type Status = (typeof VALID_STATUSES)[number];
@@ -107,6 +108,17 @@ export async function PUT(
       deploymentUrl: deployment.value,
     },
   });
+
+  const meaningfulChange =
+    updated.title !== existing.title ||
+    updated.description !== existing.description ||
+    updated.status !== existing.status ||
+    updated.category !== existing.category ||
+    updated.resourceUrl !== existing.resourceUrl ||
+    updated.deploymentUrl !== existing.deploymentUrl;
+  if (meaningfulChange) {
+    await notifyTeams(updated, "updated");
+  }
 
   return NextResponse.json(updated);
 }
