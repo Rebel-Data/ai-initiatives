@@ -9,6 +9,32 @@ function isValidStatus(v: unknown): v is Status {
   return typeof v === "string" && (VALID_STATUSES as readonly string[]).includes(v);
 }
 
+const URL_MAX_LENGTH = 500;
+
+type UrlResult = { ok: true; value: string | null } | { ok: false; error: string };
+
+function parseOptionalUrl(value: unknown, label: string): UrlResult {
+  if (value === undefined || value === null) return { ok: true, value: null };
+  if (typeof value !== "string") {
+    return { ok: false, error: `${label} must be a string` };
+  }
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+  if (trimmed.length > URL_MAX_LENGTH) {
+    return { ok: false, error: `${label} must be ${URL_MAX_LENGTH} characters or fewer` };
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return { ok: false, error: `${label} must be a valid URL` };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { ok: false, error: `${label} must use http or https` };
+  }
+  return { ok: true, value: trimmed };
+}
+
 export async function GET() {
   const user = await verifySession();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,7 +52,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
-  const { title, description, category, status } = body ?? {};
+  const { title, description, category, status, resourceUrl, deploymentUrl } = body ?? {};
 
   if (typeof title !== "string" || !title.trim()) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -47,6 +73,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const resource = parseOptionalUrl(resourceUrl, "Resource link");
+  if (!resource.ok) return NextResponse.json({ error: resource.error }, { status: 400 });
+  const deployment = parseOptionalUrl(deploymentUrl, "Deployment link");
+  if (!deployment.ok) return NextResponse.json({ error: deployment.error }, { status: 400 });
+
   const initiativeStatus: Status = isValidStatus(status) ? status : "exploring";
 
   const initiative = await prisma.aiInitiative.create({
@@ -55,6 +86,8 @@ export async function POST(request: NextRequest) {
       description: description.trim(),
       category: typeof category === "string" && category.trim() ? category.trim() : null,
       status: initiativeStatus,
+      resourceUrl: resource.value,
+      deploymentUrl: deployment.value,
       ownerId: user.id,
       ownerEmail: user.email,
       ownerName: user.name ?? null,

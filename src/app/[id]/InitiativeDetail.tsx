@@ -21,6 +21,8 @@ interface Initiative {
   description: string;
   category: string | null;
   status: string;
+  resourceUrl: string | null;
+  deploymentUrl: string | null;
   ownerName: string | null;
   ownerEmail: string;
   updatedAt: string;
@@ -67,6 +69,8 @@ export default function InitiativeDetail({
     description: initiative.description,
     category: initiative.category ?? "",
     status: initiative.status,
+    resourceUrl: initiative.resourceUrl ?? "",
+    deploymentUrl: initiative.deploymentUrl ?? "",
   });
 
   const contributors = initiative.members.filter((m) => m.role === "contributor");
@@ -134,6 +138,8 @@ export default function InitiativeDetail({
         description: updated.description,
         category: updated.category,
         status: updated.status,
+        resourceUrl: updated.resourceUrl,
+        deploymentUrl: updated.deploymentUrl,
       }));
       setEditing(false);
       router.refresh();
@@ -210,6 +216,22 @@ export default function InitiativeDetail({
                 ))}
               </select>
             </div>
+            <input
+              type="url"
+              value={form.resourceUrl}
+              maxLength={500}
+              onChange={(e) => setForm({ ...form, resourceUrl: e.target.value })}
+              placeholder="Code or explanation URL (GitHub, SharePoint, etc.)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <input
+              type="url"
+              value={form.deploymentUrl}
+              maxLength={500}
+              onChange={(e) => setForm({ ...form, deploymentUrl: e.target.value })}
+              placeholder="Deployed version URL (optional)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
             <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => {
@@ -219,6 +241,8 @@ export default function InitiativeDetail({
                     description: initiative.description,
                     category: initiative.category ?? "",
                     status: initiative.status,
+                    resourceUrl: initiative.resourceUrl ?? "",
+                    deploymentUrl: initiative.deploymentUrl ?? "",
                   });
                 }}
                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
@@ -272,6 +296,31 @@ export default function InitiativeDetail({
             <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
               {initiative.description}
             </p>
+
+            {(initiative.resourceUrl || initiative.deploymentUrl) && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {initiative.resourceUrl && (
+                  <a
+                    href={initiative.resourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg border border-gray-300 text-gray-700 hover:border-rebel-red hover:text-rebel-red"
+                  >
+                    Code / explanation ↗
+                  </a>
+                )}
+                {initiative.deploymentUrl && (
+                  <a
+                    href={initiative.deploymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-rebel-red text-white hover:bg-rebel-red/90"
+                  >
+                    Open deployment ↗
+                  </a>
+                )}
+              </div>
+            )}
 
             {canEdit && (
               <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
