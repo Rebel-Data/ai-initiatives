@@ -47,7 +47,9 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: lint-and-typecheck
+    # Runs in parallel with lint-and-typecheck — both need npm ci, but they're
+    # independent. Gating Build on Lint added ~28s of wall-clock to every PR
+    # for no extra signal (next build runs its own typecheck anyway).
     steps:
       - uses: actions/checkout@v4
 
@@ -71,7 +73,7 @@ jobs:
   deploy:
     name: Deploy to Cloud Run
     runs-on: ubuntu-latest
-    needs: build
+    needs: [lint-and-typecheck, build]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     permissions:
@@ -93,13 +95,24 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker europe-west4-docker.pkg.dev --quiet
 
+      - name: Pull previous image for layer cache
+        env:
+          IMAGE: ${{ env.IMAGE_NAME }}
+        # Best-effort: first deploy of a new repo has nothing to pull. BuildKit
+        # then uses the inline cache metadata in $IMAGE:latest to skip layers
+        # whose inputs haven't changed (npm ci, prisma generate, etc.).
+        run: docker pull "$IMAGE:latest" || true
+
       - name: Build Docker image
         env:
           SHA: ${{ github.sha }}
           IMAGE: ${{ env.IMAGE_NAME }}
+          DOCKER_BUILDKIT: "1"
         run: |
           docker build \
             --build-arg "NEXT_PUBLIC_COMMIT_HASH=$SHA" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from "$IMAGE:latest" \
             --tag "$IMAGE:$SHA" \
             --tag "$IMAGE:latest" \
             .
