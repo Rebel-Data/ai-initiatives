@@ -9,6 +9,32 @@ function isValidStatus(v: unknown): v is Status {
   return typeof v === "string" && (VALID_STATUSES as readonly string[]).includes(v);
 }
 
+const URL_MAX_LENGTH = 500;
+
+type UrlResult = { ok: true; value: string | null } | { ok: false; error: string };
+
+function parseOptionalUrl(value: unknown, label: string): UrlResult {
+  if (value === undefined || value === null) return { ok: true, value: null };
+  if (typeof value !== "string") {
+    return { ok: false, error: `${label} must be a string` };
+  }
+  const trimmed = value.trim();
+  if (!trimmed) return { ok: true, value: null };
+  if (trimmed.length > URL_MAX_LENGTH) {
+    return { ok: false, error: `${label} must be ${URL_MAX_LENGTH} characters or fewer` };
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return { ok: false, error: `${label} must be a valid URL` };
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return { ok: false, error: `${label} must use http or https` };
+  }
+  return { ok: true, value: trimmed };
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
@@ -44,7 +70,7 @@ export async function PUT(
   }
 
   const body = await request.json().catch(() => ({}));
-  const { title, description, category, status } = body ?? {};
+  const { title, description, category, status, resourceUrl, deploymentUrl } = body ?? {};
 
   if (typeof title !== "string" || !title.trim()) {
     return NextResponse.json({ error: "Title is required" }, { status: 400 });
@@ -65,6 +91,11 @@ export async function PUT(
     );
   }
 
+  const resource = parseOptionalUrl(resourceUrl, "Resource link");
+  if (!resource.ok) return NextResponse.json({ error: resource.error }, { status: 400 });
+  const deployment = parseOptionalUrl(deploymentUrl, "Deployment link");
+  if (!deployment.ok) return NextResponse.json({ error: deployment.error }, { status: 400 });
+
   const updated = await prisma.aiInitiative.update({
     where: { id: params.id },
     data: {
@@ -72,6 +103,8 @@ export async function PUT(
       description: description.trim(),
       category: typeof category === "string" && category.trim() ? category.trim() : null,
       status: isValidStatus(status) ? status : existing.status,
+      resourceUrl: resource.value,
+      deploymentUrl: deployment.value,
     },
   });
 

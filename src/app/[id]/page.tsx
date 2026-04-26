@@ -32,6 +32,8 @@ export default async function DetailPage({
           description: initiative.description,
           category: initiative.category,
           status: initiative.status,
+          resourceUrl: initiative.resourceUrl,
+          deploymentUrl: initiative.deploymentUrl,
           ownerName: initiative.ownerName,
           ownerEmail: initiative.ownerEmail,
           updatedAt: initiative.updatedAt.toISOString(),

@@ -14,6 +14,8 @@ model AiInitiative {
   description String
   category    String?  // free-form tag: "tooling", "research", "internal", etc.
   status      String   @default("exploring") // "exploring", "building", "shipped", "archived"
+  resourceUrl   String? // link to code, repo, or written explanation (GitHub, SharePoint, etc.)
+  deploymentUrl String? // link to a running/demo version, if any
   ownerId     String
   ownerEmail  String
   ownerName   String?
