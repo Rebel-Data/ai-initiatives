@@ -95,35 +95,26 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker europe-west4-docker.pkg.dev --quiet
 
-      - name: Pull previous image for layer cache
-        env:
-          IMAGE: ${{ env.IMAGE_NAME }}
-        # Best-effort: first deploy of a new repo has nothing to pull. BuildKit
-        # then uses the inline cache metadata in $IMAGE:latest to skip layers
-        # whose inputs haven't changed (npm ci, prisma generate, etc.).
-        run: docker pull "$IMAGE:latest" || true
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        env:
-          SHA: ${{ github.sha }}
-          IMAGE: ${{ env.IMAGE_NAME }}
-          DOCKER_BUILDKIT: "1"
-        run: |
-          docker build \
-            --build-arg "NEXT_PUBLIC_COMMIT_HASH=$SHA" \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from "$IMAGE:latest" \
-            --tag "$IMAGE:$SHA" \
-            --tag "$IMAGE:latest" \
-            .
-
-      - name: Push Docker image
-        env:
-          SHA: ${{ github.sha }}
-          IMAGE: ${{ env.IMAGE_NAME }}
-        run: |
-          docker push "$IMAGE:$SHA"
-          docker push "$IMAGE:latest"
+      - name: Build and push Docker image
+        # Replaces the previous pull/build/push triplet. GHA cache (type=gha,
+        # mode=max) caches every layer of every stage of the multi-stage
+        # Dockerfile — including the heavy deps + builder stages where
+        # registry-inline cache only covered the final stage. Cache lives in
+        # GitHub's per-repo Actions cache, free up to 10GB.
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            NEXT_PUBLIC_COMMIT_HASH=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Deploy to Cloud Run
         env:
