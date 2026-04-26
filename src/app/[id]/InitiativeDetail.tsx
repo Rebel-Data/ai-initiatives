@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
+import { apiUrl } from "@/lib/api";
 
 type MemberRole = "contributor" | "follower";
 
@@ -75,7 +76,7 @@ export default function InitiativeDetail({
     setError(null);
     setJoining(true);
     try {
-      const res = await fetch(`/api/initiatives/${initiative.id}/members`, {
+      const res = await fetch(apiUrl(`/api/initiatives/${initiative.id}/members`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
@@ -97,7 +98,7 @@ export default function InitiativeDetail({
     setError(null);
     setJoining(true);
     try {
-      const res = await fetch(`/api/initiatives/${initiative.id}/members`, {
+      const res = await fetch(apiUrl(`/api/initiatives/${initiative.id}/members`), {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -117,7 +118,7 @@ export default function InitiativeDetail({
     setError(null);
     setSaving(true);
     try {
-      const res = await fetch(`/api/initiatives/${initiative.id}`, {
+      const res = await fetch(apiUrl(`/api/initiatives/${initiative.id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -147,7 +148,7 @@ export default function InitiativeDetail({
     if (!confirm("Delete this initiative? This cannot be undone.")) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/initiatives/${initiative.id}`, {
+      const res = await fetch(apiUrl(`/api/initiatives/${initiative.id}`), {
         method: "DELETE",
       });
       if (!res.ok) {
