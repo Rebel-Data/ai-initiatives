@@ -37,8 +37,8 @@ interface VerifyResponse {
  * Extract the session token from incoming cookies, preferring the
  * production cookie name with a fallback to the dev name.
  */
-function readSessionToken(): string | null {
-  const jar = cookies();
+async function readSessionToken(): Promise<string | null> {
+  const jar = await cookies();
   return (
     jar.get(SESSION_COOKIE_PROD)?.value ??
     jar.get(SESSION_COOKIE_DEV)?.value ??
@@ -51,10 +51,11 @@ function readSessionToken(): string | null {
  * Returns null on any non-authenticated response.
  */
 export async function verifySession(): Promise<SessionUser | null> {
-  const token = readSessionToken();
+  const token = await readSessionToken();
   if (!token) return null;
 
-  const cookieName = headers().get("x-forwarded-proto") === "http" && process.env.NODE_ENV !== "production"
+  const forwardedProto = (await headers()).get("x-forwarded-proto");
+  const cookieName = forwardedProto === "http" && process.env.NODE_ENV !== "production"
     ? SESSION_COOKIE_DEV
     : SESSION_COOKIE_PROD;
 

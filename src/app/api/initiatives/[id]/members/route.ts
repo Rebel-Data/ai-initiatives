@@ -15,21 +15,22 @@ function isValidRole(v: unknown): v is MemberRole {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const user = await verifySession();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
   const role: MemberRole = isValidRole(body?.role) ? body.role : "follower";
 
-  const initiative = await prisma.aiInitiative.findUnique({ where: { id: params.id } });
+  const initiative = await prisma.aiInitiative.findUnique({ where: { id } });
   if (!initiative) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const member = await prisma.aiInitiativeMember.upsert({
     where: {
       initiativeId_userId: {
-        initiativeId: params.id,
+        initiativeId: id,
         userId: user.id,
       },
     },
@@ -39,7 +40,7 @@ export async function POST(
       userName: user.name ?? null,
     },
     create: {
-      initiativeId: params.id,
+      initiativeId: id,
       userId: user.id,
       userEmail: user.email,
       userName: user.name ?? null,
@@ -55,14 +56,15 @@ export async function POST(
  */
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const user = await verifySession();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   await prisma.aiInitiativeMember.deleteMany({
     where: {
-      initiativeId: params.id,
+      initiativeId: id,
       userId: user.id,
     },
   });

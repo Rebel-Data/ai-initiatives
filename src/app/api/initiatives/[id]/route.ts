@@ -37,13 +37,14 @@ function parseOptionalUrl(value: unknown, label: string): UrlResult {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const user = await verifySession();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const initiative = await prisma.aiInitiative.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { members: { orderBy: { createdAt: "asc" } } },
   });
 
@@ -56,12 +57,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const user = await verifySession();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const existing = await prisma.aiInitiative.findUnique({ where: { id: params.id } });
+  const existing = await prisma.aiInitiative.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const canEdit = user.role === "admin" || existing.ownerId === user.id;
@@ -97,7 +99,7 @@ export async function PUT(
   if (!deployment.ok) return NextResponse.json({ error: deployment.error }, { status: 400 });
 
   const updated = await prisma.aiInitiative.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       title: title.trim(),
       description: description.trim(),
@@ -113,12 +115,13 @@ export async function PUT(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const user = await verifySession();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const existing = await prisma.aiInitiative.findUnique({ where: { id: params.id } });
+  const existing = await prisma.aiInitiative.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const canDelete = user.role === "admin" || existing.ownerId === user.id;
@@ -126,6 +129,6 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await prisma.aiInitiative.delete({ where: { id: params.id } });
+  await prisma.aiInitiative.delete({ where: { id } });
   return NextResponse.json({ success: true });
 }
