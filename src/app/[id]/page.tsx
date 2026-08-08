@@ -7,13 +7,14 @@ import InitiativeDetail from "./InitiativeDetail";
 export default async function DetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const user = await verifySession();
-  if (!user) redirect(loginUrl(`/ai-initiatives/${params.id}`));
+  if (!user) redirect(loginUrl(`/ai-initiatives/${id}`));
 
   const initiative = await prisma.aiInitiative.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { members: { orderBy: { createdAt: "asc" } } },
   });
 
