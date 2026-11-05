@@ -1,10 +1,15 @@
 import { defineConfig } from "prisma/config";
 
-// Prisma 7 no longer auto-loads env files. Local dev uses .env.local;
-// CI and Docker have no env file and pass DATABASE_URL directly.
-try {
-  process.loadEnvFile(".env.local");
-} catch {}
+// Prisma 7 no longer auto-loads env files. Local dev uses .env.local (or .env,
+// which Prisma 5 read); CI and Docker have no env file and pass DATABASE_URL
+// directly. loadEnvFile never overrides variables that are already set.
+for (const file of [".env.local", ".env"]) {
+  try {
+    process.loadEnvFile(file);
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+  }
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

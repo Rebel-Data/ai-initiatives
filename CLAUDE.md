@@ -20,7 +20,7 @@ No test runner is configured. "Verification" here = `npm run lint && npm run typ
 
 ## Architecture
 
-This is a small Next.js 16 (App Router) app deployed to Cloud Run and served **behind the shared Rebel load balancer at `rgmp.net/ai-initiatives`**. The LB does **not** rewrite the path prefix, so `next.config.js` sets `basePath: "/ai-initiatives"` — matching how every other rgmp.net app (brand portal, fare dashboard, wiki-status, etc.) is wired. Next.js therefore serves pages at `/ai-initiatives/*`, `<Link>` hrefs are prefixed automatically, and the middleware matcher is scoped to the basePath.
+This is a small Next.js 16 (App Router) app deployed to Cloud Run and served **behind the shared Rebel load balancer at `rgmp.net/ai-initiatives`**. The LB does **not** rewrite the path prefix, so `next.config.js` sets `basePath: "/ai-initiatives"` — matching how every other rgmp.net app (brand portal, fare dashboard, wiki-status, etc.) is wired. Next.js therefore serves pages at `/ai-initiatives/*`, `<Link>` hrefs are prefixed automatically, and the proxy matcher is scoped to the basePath.
 
 ### Auth model — two-layer, do not collapse them
 
@@ -29,9 +29,9 @@ Auth is delegated to the shared RGMP SSO (`rgmp.net/api/auth/verify`, documented
 1. **`src/proxy.ts`** (Next 16 "proxy", formerly middleware) — runs on every request. It only checks for the *presence* of the `.rgmp.net` session cookie (`__Secure-next-auth.session-token` in prod, `next-auth.session-token` in dev). If present, it passes through; if missing, it redirects UI routes to `rgmp.net/login` or returns 401 on `/api/*`. It is intentionally fast and does **not** cryptographically verify the session.
 2. **`src/lib/auth.ts#verifySession()`** — called from every page/route handler that needs the user. It forwards the session cookie to `rgmp.net/api/auth/verify` (with `INTERNAL_API_KEY` as `x-internal-api-key`) and returns a typed `SessionUser` or `null`. This is the real auth gate.
 
-When adding a new page or API route, **always call `verifySession()` server-side** — the middleware alone is not sufficient because it does not validate the cookie's signature or expiry. `/api/health` is the only route intentionally unauthenticated (liveness probe, allowlisted in the middleware matcher).
+When adding a new page or API route, **always call `verifySession()` server-side** — the proxy alone is not sufficient because it does not validate the cookie's signature or expiry. `/api/health` is the only route intentionally unauthenticated (liveness probe, allowlisted in the proxy matcher).
 
-`SKIP_AUTH=true` short-circuits only the middleware; if your code calls `verifySession()` you still need a real cookie or you must branch on `SKIP_AUTH` yourself.
+`SKIP_AUTH=true` short-circuits only the proxy; if your code calls `verifySession()` you still need a real cookie or you must branch on `SKIP_AUTH` yourself.
 
 ### Data layer
 
@@ -43,7 +43,7 @@ When adding a new page or API route, **always call `verifySession()` server-side
 ### Route conventions
 
 - `src/app/page.tsx` (list), `src/app/new/` (create form), `src/app/[id]/` (detail) — server components that call `verifySession()` before rendering and fetch through Prisma directly.
-- `src/app/api/initiatives/` + `[id]/` + `[id]/members/` — JSON route handlers. Each handler re-verifies the session; never assume middleware has authenticated.
+- `src/app/api/initiatives/` + `[id]/` + `[id]/members/` — JSON route handlers. Each handler re-verifies the session; never assume the proxy has authenticated.
 - `@/*` path alias maps to `src/*` (see `tsconfig.json`).
 
 ### Deploy
@@ -56,6 +56,6 @@ When adding a new page or API route, **always call `verifySession()` server-side
 
 - The dev server runs on **3001**, not 3000. If you see "port in use," it's likely `rgmp-applications` on 3000 or a stale `next dev` — check before picking another port.
 - `npm run build` depends on `prisma generate` succeeding; if you change `schema.prisma`, re-run build or `postinstall` will fall behind.
-- When debugging auth locally, `SKIP_AUTH=true` only skips the middleware. Pages that call `verifySession()` will still return no user unless you also stub `verifySession` or hit a real rgmp.net verify endpoint.
-- `basePath: "/ai-initiatives"` is load-bearing — Next.js prepends it to `<Link>` hrefs and static asset URLs automatically. Inside middleware, `request.nextUrl.pathname` is the *post-basePath* path (e.g. `/new`, not `/ai-initiatives/new`), so don't re-add the prefix when constructing redirect callbacks.
+- When debugging auth locally, `SKIP_AUTH=true` only skips the proxy. Pages that call `verifySession()` will still return no user unless you also stub `verifySession` or hit a real rgmp.net verify endpoint.
+- `basePath: "/ai-initiatives"` is load-bearing — Next.js prepends it to `<Link>` hrefs and static asset URLs automatically. Inside the proxy, `request.nextUrl.pathname` is the *post-basePath* path (e.g. `/new`, not `/ai-initiatives/new`), so don't re-add the prefix when constructing redirect callbacks.
 - Next.js basePath does **not** auto-prefix `fetch()`. Any client-side call to this app's own API must go through `src/lib/api.ts#apiUrl()` — e.g. `fetch(apiUrl("/api/initiatives"))`, not `fetch("/api/initiatives")`. A raw path hits the LB root in prod (routed to a different app) or the Next dev root locally (404), returning HTML that blows up `res.json()` and surfaces as a generic "Failed to …" in the UI.

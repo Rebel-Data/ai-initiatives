@@ -33,6 +33,12 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  /* v4 preflight changed placeholders to currentcolor at 50%; keep v3 gray-400. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
 }
 
 :root {
