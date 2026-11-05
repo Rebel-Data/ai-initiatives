@@ -36,7 +36,7 @@ When adding a new page or API route, **always call `verifySession()` server-side
 ### Data layer
 
 - Prisma + PostgreSQL. Models live in `prisma/schema.prisma` (currently `AiInitiative` and `AiInitiativeMember`).
-- `src/lib/prisma.ts` exports a **singleton** `PrismaClient` stashed on `globalThis` in non-production to avoid exhausting connections during HMR. Import from `@/lib/prisma`; do not `new PrismaClient()` anywhere else.
+- `src/lib/prisma.ts` exports a **singleton** `PrismaClient` stashed on `globalThis` in non-production to avoid exhausting connections during HMR. Import from `@/lib/prisma`; do not `new PrismaClient()` anywhere else (and never import from `@prisma/client` — the generated client lives at `@/generated/prisma/client`).
 - Status is stored as a free-form string but validated against the tuple `["exploring","building","shipped","archived"]` at the API boundary (see `src/app/api/initiatives/route.ts`). Keep the tuple and Prisma default in sync if you add a status.
 - Migrations live under `prisma/migrations/`. Create them with `npm run db:migrate` locally; prod applies them via `npm run db:deploy` after a container rollout (see README deployment notes).
 
@@ -49,7 +49,7 @@ When adding a new page or API route, **always call `verifySession()` server-side
 ### Deploy
 
 - Dockerfile targets `node:24-alpine`, uses Next.js standalone output, runs `prisma generate` during `npm run build` (also in the Dockerfile explicitly).
-- Prisma needs the musl binary target — already set via `binaryTargets = ["native", "linux-musl-openssl-3.0.x"]` in `schema.prisma`. Do not remove.
+- Prisma 7 (`prisma-client` generator, no Rust query engine, so no `binaryTargets`). The client is generated to `src/generated/prisma/` (gitignored) and talks to Postgres through `@prisma/adapter-pg`. The DB URL is read in `prisma.config.ts`, which loads `.env.local` for CLI commands; the Dockerfile deps stage copies that file so `postinstall` can generate.
 - Deployed to Cloud Run in `mobility-payments-db / europe-west4`. `INTERNAL_API_KEY` comes from Secret Manager.
 
 ## Gotchas
