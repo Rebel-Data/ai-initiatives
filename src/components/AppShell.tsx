@@ -12,7 +12,7 @@ export default function AppShell({
 }) {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="bg-[#EF4035] px-6 py-3 flex items-center z-10">
+      <header className="bg-rebel-red px-6 py-3 flex items-center z-10">
         <div className="flex items-center gap-3 flex-1">
           <a
             href={RGMP_URL}
@@ -51,7 +51,7 @@ export default function AppShell({
         {children}
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 py-2 px-4 text-center">
+      <footer className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xs border-t border-gray-200 py-2 px-4 text-center">
         <span className="text-xs text-gray-400">
           Version: {(process.env.NEXT_PUBLIC_COMMIT_HASH || "dev").substring(0, 7)}
         </span>

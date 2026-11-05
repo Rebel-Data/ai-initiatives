@@ -7,7 +7,7 @@ import remarkGfm from "remark-gfm";
 // which is what keeps this safe against XSS from untrusted descriptions.
 export default function Markdown({ children }: { children: string }) {
   return (
-    <div className="prose prose-slate max-w-none prose-headings:scroll-mt-20 prose-a:text-rebel-red prose-a:no-underline hover:prose-a:underline prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-code:before:content-none prose-code:after:content-none">
+    <div className="prose prose-slate max-w-none prose-headings:scroll-mt-20 prose-a:text-rebel-red prose-a:no-underline prose-a:hover:underline prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-code:before:content-none prose-code:after:content-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
