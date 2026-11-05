@@ -14,7 +14,7 @@ const RGMP_URL = process.env.RGMP_AUTH_URL || process.env.RGMP_URL || "https://r
 const SESSION_COOKIE_PROD = "__Secure-next-auth.session-token";
 const SESSION_COOKIE_DEV = "next-auth.session-token";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip auth-less paths

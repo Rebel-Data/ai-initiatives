@@ -77,7 +77,7 @@ export default function NewInitiativeForm() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. AI-assisted tender analysis"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
           />
         </div>
 
@@ -93,7 +93,7 @@ export default function NewInitiativeForm() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe the problem, the AI angle, and what &quot;working&quot; looks like. Include links if you have them."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red font-mono text-sm"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red font-mono text-sm"
           />
           <p className="text-xs text-gray-500 mt-1">
             Supports GitHub-flavored markdown — paste a README straight in if you have one.
@@ -112,7 +112,7 @@ export default function NewInitiativeForm() {
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               placeholder="e.g. tooling, research, ops"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
             />
           </div>
           <div>
@@ -123,7 +123,7 @@ export default function NewInitiativeForm() {
               id="status"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red bg-white"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red bg-white"
             >
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>
@@ -145,7 +145,7 @@ export default function NewInitiativeForm() {
             value={resourceUrl}
             onChange={(e) => setResourceUrl(e.target.value)}
             placeholder="https://github.com/... or SharePoint / Notion / Google Doc link"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
           />
           <p className="text-xs text-gray-500 mt-1">
             Where can people find the repo, design doc, or write-up?
@@ -163,7 +163,7 @@ export default function NewInitiativeForm() {
             value={deploymentUrl}
             onChange={(e) => setDeploymentUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-rebel-red/30 focus:border-rebel-red"
           />
           <p className="text-xs text-gray-500 mt-1">
             If there&apos;s something running people can try, link it here.

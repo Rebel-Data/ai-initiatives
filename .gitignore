@@ -12,3 +12,6 @@ coverage
 /build
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Prisma 7 generated client
+/src/generated/

@@ -1,6 +1,45 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@theme {
+  --color-rebel-red: #ef4035;
+  --color-rebel-nav-bg: #fff1f1;
+  --color-rebel-text: #0c1433;
+  --color-rebel-hover: #ffdadb;
+
+  --font-heading: freight-sans-pro, sans-serif;
+  --font-body: Inter, sans-serif;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+
+  /* v4 preflight dropped cursor: pointer on buttons; keep v3 behaviour. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  /* v4 preflight changed placeholders to currentcolor at 50%; keep v3 gray-400. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+  }
+}
 
 :root {
   --rebel-red: #ef4035;

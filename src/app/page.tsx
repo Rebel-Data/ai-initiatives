@@ -129,7 +129,7 @@ export default async function ListPage() {
                 <Link
                   key={init.id}
                   href={`/${init.id}`}
-                  className="block bg-white rounded-xl border border-gray-200 p-5 hover:border-rebel-red hover:shadow-sm transition"
+                  className="block bg-white rounded-xl border border-gray-200 p-5 hover:border-rebel-red hover:shadow-xs transition"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <h3 className="font-semibold text-lg text-gray-900 leading-snug">
