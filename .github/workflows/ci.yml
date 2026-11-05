@@ -20,7 +20,7 @@ on:
     branches: [main]
 
 env:
-  NODE_VERSION: '22'
+  NODE_VERSION: '24'
   PROJECT_ID: mobility-payments-db
   REGION: europe-west4
   SERVICE_NAME: ai-initiatives

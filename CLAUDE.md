@@ -9,7 +9,7 @@ npm run dev            # Next.js dev server on port 3001 (not 3000 — avoids cl
 SKIP_AUTH=true npm run dev   # bypass SSO locally; required unless you have a real rgmp.net session cookie
 npm run build          # runs `prisma generate` then `next build` (standalone output)
 npm run start          # serve the built app
-npm run lint           # eslint via next lint
+npm run lint           # eslint . (flat config, eslint.config.mjs)
 npm run typecheck      # tsc --noEmit
 npm run db:migrate     # prisma migrate dev (local schema changes)
 npm run db:deploy      # prisma migrate deploy (production)
@@ -20,13 +20,13 @@ No test runner is configured. "Verification" here = `npm run lint && npm run typ
 
 ## Architecture
 
-This is a small Next.js 14 (App Router) app deployed to Cloud Run and served **behind the shared Rebel load balancer at `rgmp.net/ai-initiatives`**. The LB does **not** rewrite the path prefix, so `next.config.js` sets `basePath: "/ai-initiatives"` — matching how every other rgmp.net app (brand portal, fare dashboard, wiki-status, etc.) is wired. Next.js therefore serves pages at `/ai-initiatives/*`, `<Link>` hrefs are prefixed automatically, and the middleware matcher is scoped to the basePath.
+This is a small Next.js 16 (App Router) app deployed to Cloud Run and served **behind the shared Rebel load balancer at `rgmp.net/ai-initiatives`**. The LB does **not** rewrite the path prefix, so `next.config.js` sets `basePath: "/ai-initiatives"` — matching how every other rgmp.net app (brand portal, fare dashboard, wiki-status, etc.) is wired. Next.js therefore serves pages at `/ai-initiatives/*`, `<Link>` hrefs are prefixed automatically, and the middleware matcher is scoped to the basePath.
 
 ### Auth model — two-layer, do not collapse them
 
 Auth is delegated to the shared RGMP SSO (`rgmp.net/api/auth/verify`, documented in `rgmp-applications/docs/AUTH_INTEGRATION.md`). The integration uses two distinct layers, and they must stay distinct:
 
-1. **`src/middleware.ts`** — runs on every request. It only checks for the *presence* of the `.rgmp.net` session cookie (`__Secure-next-auth.session-token` in prod, `next-auth.session-token` in dev). If present, it passes through; if missing, it redirects UI routes to `rgmp.net/login` or returns 401 on `/api/*`. It is intentionally fast and does **not** cryptographically verify the session.
+1. **`src/proxy.ts`** (Next 16 "proxy", formerly middleware) — runs on every request. It only checks for the *presence* of the `.rgmp.net` session cookie (`__Secure-next-auth.session-token` in prod, `next-auth.session-token` in dev). If present, it passes through; if missing, it redirects UI routes to `rgmp.net/login` or returns 401 on `/api/*`. It is intentionally fast and does **not** cryptographically verify the session.
 2. **`src/lib/auth.ts#verifySession()`** — called from every page/route handler that needs the user. It forwards the session cookie to `rgmp.net/api/auth/verify` (with `INTERNAL_API_KEY` as `x-internal-api-key`) and returns a typed `SessionUser` or `null`. This is the real auth gate.
 
 When adding a new page or API route, **always call `verifySession()` server-side** — the middleware alone is not sufficient because it does not validate the cookie's signature or expiry. `/api/health` is the only route intentionally unauthenticated (liveness probe, allowlisted in the middleware matcher).
@@ -48,7 +48,7 @@ When adding a new page or API route, **always call `verifySession()` server-side
 
 ### Deploy
 
-- Dockerfile targets `node:22-alpine`, uses Next.js standalone output, runs `prisma generate` during `npm run build` (also in the Dockerfile explicitly).
+- Dockerfile targets `node:24-alpine`, uses Next.js standalone output, runs `prisma generate` during `npm run build` (also in the Dockerfile explicitly).
 - Prisma needs the musl binary target — already set via `binaryTargets = ["native", "linux-musl-openssl-3.0.x"]` in `schema.prisma`. Do not remove.
 - Deployed to Cloud Run in `mobility-payments-db / europe-west4`. `INTERNAL_API_KEY` comes from Secret Manager.
 

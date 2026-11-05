@@ -56,7 +56,7 @@ for the exact gcloud commands and the Cloud Run Service Agent gotcha):
 
 ```
 src/
-├── middleware.ts        Cookie-presence gate; redirects to rgmp.net/login
+├── proxy.ts             Cookie-presence gate; redirects to rgmp.net/login
 ├── lib/
 │   ├── auth.ts          verifySession() — calls rgmp.net/api/auth/verify
 │   └── prisma.ts        Prisma client singleton
