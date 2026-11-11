@@ -1,7 +1,6 @@
 import Link from "next/link";
 import type { SessionUser } from "@/lib/auth";
-
-const RGMP_URL = process.env.RGMP_AUTH_URL || process.env.RGMP_URL || "https://rgmp.net";
+import AccountMenu from "@/components/AccountMenu";
 
 export default function AppShell({
   user,
@@ -15,11 +14,11 @@ export default function AppShell({
       <header className="bg-rebel-red px-6 py-3 flex items-center z-10">
         <div className="flex items-center gap-3 flex-1">
           <a
-            href={RGMP_URL}
-            className="text-2xl text-white hover:text-white/80 transition-opacity"
-            aria-label="Back to RGMP"
+            href="https://rgmp.net/"
+            className="text-sm text-white hover:text-white/80 transition-opacity font-medium"
+            aria-label="Back to Rebel hub"
           >
-            ←
+            ← Rebel hub
           </a>
           <h1 className="text-xl font-bold text-white">AI Initiatives</h1>
         </div>
@@ -37,13 +36,7 @@ export default function AppShell({
           >
             + New
           </Link>
-          <span className="text-sm text-white">{user.name ?? user.email}</span>
-          <a
-            href={`${RGMP_URL}/api/auth/signout`}
-            className="text-sm text-white hover:text-white/90 underline underline-offset-2"
-          >
-            Sign out
-          </a>
+          <AccountMenu name={user.name} email={user.email} />
         </div>
       </header>
 
