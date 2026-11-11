@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export function initials(name?: string | null, email?: string | null): string {
+function initials(name?: string | null, email?: string | null): string {
   const source = name?.trim() || email?.split("@")[0] || "";
   const parts = source.split(/[\s._-]+/).filter(Boolean);
   if (parts.length === 0) return "?";
-  const first = parts[0][0];
-  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  const first = [...parts[0]][0];
+  const last = parts.length > 1 ? [...parts[parts.length - 1]][0] : "";
   return (first + last).toUpperCase();
 }
 
@@ -23,16 +23,16 @@ export default function AccountMenu({
 
   useEffect(() => {
     if (!open) return;
-    const onClick = (e: MouseEvent) => {
+    const onClick = (e: PointerEvent) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    document.addEventListener("mousedown", onClick);
+    document.addEventListener("pointerdown", onClick);
     document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("pointerdown", onClick);
       document.removeEventListener("keydown", onKey);
     };
   }, [open]);
@@ -45,7 +45,7 @@ export default function AccountMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="w-9 h-9 rounded-full bg-white text-[#EF4035] text-sm font-bold flex items-center justify-center hover:bg-white/90"
+        className="w-9 h-9 rounded-full bg-white text-rebel-red text-sm font-bold flex items-center justify-center hover:bg-white/90"
       >
         {initials(name, email)}
       </button>
